@@ -1,2 +1,0 @@
-# StylematchAi
-AI haircut suggestor
