@@ -1,0 +1,1826 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>StyleMatch AI — Bespoke Haircut &amp; Facial Proportion Studio</title>
+  <style>
+    :root {
+      --bg: #faf7f2;
+      --bg-elevated: #ffffff;
+      --bg-subtle: #f3ede4;
+      --bg-muted: #ebe3d6;
+      --ink: #1e1b18;
+      --ink-secondary: #575049;
+      --ink-muted: #847a70;
+      --accent: #9a6747;
+      --accent-hover: #815336;
+      --accent-soft: #f5ebe3;
+      --accent-border: #dfc7b5;
+      --border: #e6dfd5;
+      --border-strong: #d3c8b9;
+      --success: #2c6e49;
+      --success-bg: #eaf5ef;
+      --error: #9e2a2b;
+      --error-bg: #fdf1f1;
+      --error-border: #f1c6c6;
+      --shadow-sm: 0 1px 3px rgba(30, 27, 24, 0.05), 0 1px 2px rgba(30, 27, 24, 0.04);
+      --shadow-md: 0 8px 24px rgba(30, 27, 24, 0.06), 0 2px 6px rgba(30, 27, 24, 0.04);
+      --shadow-lg: 0 16px 40px rgba(30, 27, 24, 0.09);
+      --radius-sm: 8px;
+      --radius-md: 14px;
+      --radius-lg: 20px;
+      --font-serif: Georgia, "Times New Roman", Times, serif;
+      --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    }
+
+    *, *::before, *::after {
+      box-sizing: border-box;
+    }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background-color: var(--bg);
+      background-image:
+        radial-gradient(at 15% 0%, rgba(154, 103, 71, 0.06) 0px, transparent 50%),
+        radial-gradient(at 85% 10%, rgba(210, 185, 160, 0.14) 0px, transparent 45%);
+      color: var(--ink);
+      font-family: var(--font-sans);
+      font-size: 15px;
+      line-height: 1.55;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* Sticky Header & API Key Bar */
+    .topbar {
+      position: sticky;
+      top: 0;
+      z-index: 40;
+      background: rgba(250, 247, 242, 0.88);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .topbar-inner {
+      max-width: 1180px;
+      margin: 0 auto;
+      padding: 14px 24px;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 14px;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .brand-mark {
+      width: 38px;
+      height: 38px;
+      border-radius: 50%;
+      background: var(--ink);
+      color: var(--bg);
+      display: grid;
+      place-items: center;
+      flex-shrink: 0;
+    }
+
+    .brand-text h1 {
+      margin: 0;
+      font-family: var(--font-serif);
+      font-size: 1.3rem;
+      font-weight: 700;
+      letter-spacing: -0.01em;
+      line-height: 1.15;
+    }
+
+    .brand-text span {
+      display: block;
+      font-size: 0.72rem;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: var(--ink-muted);
+      font-weight: 600;
+    }
+
+    .api-bar {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .api-input-wrap {
+      position: relative;
+      display: flex;
+      align-items: center;
+    }
+
+    .api-input {
+      width: 260px;
+      padding: 8px 34px 8px 12px;
+      border: 1px solid var(--border-strong);
+      border-radius: var(--radius-sm);
+      background: var(--bg-elevated);
+      color: var(--ink);
+      font-size: 0.85rem;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      transition: border-color 0.15s, box-shadow 0.15s;
+    }
+
+    .api-input:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(154, 103, 71, 0.14);
+    }
+
+    .icon-btn-inline {
+      position: absolute;
+      right: 6px;
+      background: none;
+      border: none;
+      color: var(--ink-muted);
+      cursor: pointer;
+      padding: 4px;
+      display: grid;
+      place-items: center;
+      border-radius: 4px;
+    }
+
+    .icon-btn-inline:hover {
+      color: var(--ink);
+    }
+
+    .key-status {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.78rem;
+      font-weight: 600;
+      padding: 5px 10px;
+      border-radius: 999px;
+      border: 1px solid var(--border);
+      background: var(--bg-elevated);
+      color: var(--ink-secondary);
+    }
+
+    .key-status.ready {
+      background: var(--success-bg);
+      color: var(--success);
+      border-color: rgba(44, 110, 73, 0.25);
+    }
+
+    .key-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: var(--ink-muted);
+    }
+
+    .key-status.ready .key-dot {
+      background: var(--success);
+    }
+
+    /* Main Container */
+    .container {
+      max-width: 1180px;
+      margin: 0 auto;
+      padding: 32px 24px 64px;
+    }
+
+    .editorial-hero {
+      max-width: 740px;
+      margin-bottom: 24px;
+    }
+
+    .editorial-kicker {
+      display: inline-block;
+      font-size: 0.74rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.14em;
+      color: var(--accent);
+      margin-bottom: 8px;
+    }
+
+    .editorial-hero h2 {
+      margin: 0 0 10px;
+      font-family: var(--font-serif);
+      font-size: clamp(1.75rem, 3vw, 2.4rem);
+      font-weight: 700;
+      line-height: 1.18;
+      letter-spacing: -0.015em;
+    }
+
+    .editorial-hero p {
+      margin: 0;
+      color: var(--ink-secondary);
+      font-size: 1rem;
+    }
+
+    /* Privacy Banner */
+    .privacy-note {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      margin-bottom: 28px;
+      padding: 12px 16px;
+      background: var(--bg-subtle);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      font-size: 0.84rem;
+      color: var(--ink-secondary);
+    }
+
+    .privacy-note svg {
+      flex-shrink: 0;
+      margin-top: 2px;
+      color: var(--accent);
+    }
+
+    /* Studio Workspace Grid */
+    .studio-grid {
+      display: grid;
+      grid-template-columns: 400px 1fr;
+      gap: 24px;
+      align-items: start;
+    }
+
+    @media (max-width: 960px) {
+      .studio-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .card {
+      background: var(--bg-elevated);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-sm);
+      padding: 24px;
+    }
+
+    .card-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+
+    .card-title {
+      margin: 0;
+      font-family: var(--font-serif);
+      font-size: 1.2rem;
+      font-weight: 700;
+    }
+
+    .step-badge {
+      font-size: 0.72rem;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--accent);
+      background: var(--accent-soft);
+      border: 1px solid var(--accent-border);
+      padding: 3px 9px;
+      border-radius: 999px;
+    }
+
+    /* Photo Input Area */
+    .photo-stage {
+      border: 1.5px dashed var(--border-strong);
+      border-radius: var(--radius-md);
+      background: var(--bg);
+      min-height: 320px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 20px;
+      position: relative;
+      overflow: hidden;
+      transition: border-color 0.2s, background-color 0.2s;
+    }
+
+    .photo-stage.dragover {
+      border-color: var(--accent);
+      background: var(--accent-soft);
+    }
+
+    .photo-stage.has-media {
+      padding: 0;
+      border-style: solid;
+      border-color: var(--border);
+      background: #141210;
+    }
+
+    .upload-placeholder svg {
+      color: var(--accent);
+      margin-bottom: 10px;
+    }
+
+    .upload-placeholder h4 {
+      margin: 0 0 6px;
+      font-size: 1rem;
+      font-weight: 600;
+    }
+
+    .upload-placeholder p {
+      margin: 0 0 16px;
+      font-size: 0.84rem;
+      color: var(--ink-muted);
+      max-width: 260px;
+    }
+
+    .photo-actions-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      justify-content: center;
+    }
+
+    .preview-img {
+      width: 100%;
+      max-height: 430px;
+      object-fit: contain;
+      display: block;
+    }
+
+    .webcam-video {
+      width: 100%;
+      max-height: 400px;
+      object-fit: cover;
+      display: block;
+      transform: scaleX(-1);
+    }
+
+    .media-overlay-bar {
+      position: absolute;
+      bottom: 12px;
+      left: 12px;
+      right: 12px;
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+      z-index: 3;
+    }
+
+    /* Buttons */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      font-family: var(--font-sans);
+      font-size: 0.88rem;
+      font-weight: 600;
+      padding: 10px 16px;
+      border-radius: var(--radius-sm);
+      border: 1px solid transparent;
+      cursor: pointer;
+      transition: all 0.16s ease;
+      text-decoration: none;
+      line-height: 1.2;
+    }
+
+    .btn:disabled {
+      opacity: 0.55;
+      cursor: not-allowed;
+    }
+
+    .btn-primary {
+      background: var(--ink);
+      color: #ffffff;
+    }
+
+    .btn-primary:hover:not(:disabled) {
+      background: #332e29;
+      transform: translateY(-1px);
+      box-shadow: var(--shadow-sm);
+    }
+
+    .btn-accent {
+      background: var(--accent);
+      color: #ffffff;
+    }
+
+    .btn-accent:hover:not(:disabled) {
+      background: var(--accent-hover);
+      transform: translateY(-1px);
+      box-shadow: var(--shadow-sm);
+    }
+
+    .btn-secondary {
+      background: var(--bg-elevated);
+      color: var(--ink);
+      border-color: var(--border-strong);
+    }
+
+    .btn-secondary:hover:not(:disabled) {
+      background: var(--bg-subtle);
+      border-color: var(--ink-muted);
+    }
+
+    .btn-glass {
+      background: rgba(24, 21, 18, 0.78);
+      color: #ffffff;
+      border-color: rgba(255, 255, 255, 0.25);
+      backdrop-filter: blur(8px);
+    }
+
+    .btn-glass:hover:not(:disabled) {
+      background: rgba(24, 21, 18, 0.92);
+    }
+
+    .btn-sm {
+      font-size: 0.8rem;
+      padding: 7px 12px;
+    }
+
+    .btn-lg {
+      width: 100%;
+      padding: 14px 20px;
+      font-size: 0.98rem;
+      border-radius: var(--radius-md);
+    }
+
+    /* Preferences Form */
+    .prefs-section {
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    .pref-group-label {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      margin-bottom: 8px;
+      font-size: 0.86rem;
+      font-weight: 700;
+      color: var(--ink);
+    }
+
+    .pref-group-hint {
+      font-weight: 400;
+      font-size: 0.78rem;
+      color: var(--ink-muted);
+    }
+
+    .pill-group {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .pill-btn {
+      padding: 8px 14px;
+      border-radius: 999px;
+      border: 1px solid var(--border-strong);
+      background: var(--bg);
+      color: var(--ink-secondary);
+      font-family: var(--font-sans);
+      font-size: 0.84rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+
+    .pill-btn:hover {
+      border-color: var(--accent);
+      color: var(--ink);
+    }
+
+    .pill-btn.active {
+      background: var(--ink);
+      color: #ffffff;
+      border-color: var(--ink);
+      font-weight: 600;
+    }
+
+    .analyze-footer {
+      margin-top: 8px;
+      padding-top: 18px;
+      border-top: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    /* Inline Alerts & Loaders */
+    .alert {
+      padding: 12px 14px;
+      border-radius: var(--radius-sm);
+      font-size: 0.86rem;
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      margin-top: 12px;
+    }
+
+    .alert-error {
+      background: var(--error-bg);
+      border: 1px solid var(--error-border);
+      color: var(--error);
+    }
+
+    .spinner {
+      width: 18px;
+      height: 18px;
+      border: 2.2px solid currentColor;
+      border-right-color: transparent;
+      border-radius: 50%;
+      animation: spin 0.75s linear infinite;
+      flex-shrink: 0;
+    }
+
+    .spinner-lg {
+      width: 32px;
+      height: 32px;
+      border-width: 3px;
+      color: var(--accent);
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    .loading-panel {
+      margin-top: 28px;
+      padding: 40px 24px;
+      text-align: center;
+      background: var(--bg-elevated);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-sm);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .loading-panel h3 {
+      margin: 0;
+      font-family: var(--font-serif);
+      font-size: 1.25rem;
+    }
+
+    .loading-panel p {
+      margin: 0;
+      color: var(--ink-secondary);
+      font-size: 0.9rem;
+    }
+
+    /* Results Section */
+    .results-section {
+      margin-top: 36px;
+      animation: fadeUp 0.35s ease;
+    }
+
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .profile-summary-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 20px;
+      margin-bottom: 28px;
+    }
+
+    @media (max-width: 720px) {
+      .profile-summary-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .profile-card {
+      background: var(--bg-elevated);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 22px 24px;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .profile-label {
+      font-size: 0.73rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: var(--accent);
+      margin-bottom: 6px;
+    }
+
+    .profile-headline {
+      margin: 0 0 8px;
+      font-family: var(--font-serif);
+      font-size: 1.45rem;
+      font-weight: 700;
+    }
+
+    .profile-copy {
+      margin: 0;
+      color: var(--ink-secondary);
+      font-size: 0.92rem;
+    }
+
+    .hair-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 10px;
+    }
+
+    .hair-tag {
+      font-size: 0.78rem;
+      font-weight: 600;
+      padding: 4px 10px;
+      background: var(--bg-subtle);
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      color: var(--ink);
+    }
+
+    .section-heading-row {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 18px;
+    }
+
+    .section-heading-row h3 {
+      margin: 0;
+      font-family: var(--font-serif);
+      font-size: 1.55rem;
+    }
+
+    .section-heading-row span {
+      color: var(--ink-muted);
+      font-size: 0.88rem;
+    }
+
+    /* Recommendation Cards */
+    .recs-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 22px;
+    }
+
+    @media (max-width: 860px) {
+      .recs-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .rec-card {
+      background: var(--bg-elevated);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-sm);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      transition: box-shadow 0.2s ease;
+    }
+
+    .rec-card:hover {
+      box-shadow: var(--shadow-md);
+    }
+
+    .rec-header {
+      padding: 22px 24px 16px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 12px;
+      background: linear-gradient(to bottom, #fdfbf8, #ffffff);
+    }
+
+    .rec-num {
+      font-size: 0.72rem;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--accent);
+      margin-bottom: 4px;
+    }
+
+    .rec-name {
+      margin: 0;
+      font-family: var(--font-serif);
+      font-size: 1.32rem;
+      font-weight: 700;
+      line-height: 1.25;
+    }
+
+    .rec-body {
+      padding: 20px 24px 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      flex: 1;
+    }
+
+    .rec-block-label {
+      font-size: 0.74rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--ink-muted);
+      margin-bottom: 4px;
+    }
+
+    .rec-block-text {
+      margin: 0;
+      font-size: 0.92rem;
+      color: var(--ink-secondary);
+    }
+
+    .script-box {
+      background: var(--bg-subtle);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      padding: 14px 16px;
+    }
+
+    .script-box-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      margin-bottom: 8px;
+    }
+
+    .script-text {
+      margin: 0;
+      font-size: 0.86rem;
+      color: var(--ink);
+      line-height: 1.5;
+    }
+
+    .copy-btn {
+      background: var(--bg-elevated);
+      border: 1px solid var(--border-strong);
+      color: var(--ink);
+      font-size: 0.76rem;
+      font-weight: 600;
+      padding: 5px 10px;
+      border-radius: 999px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      transition: all 0.15s;
+      flex-shrink: 0;
+    }
+
+    .copy-btn:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+
+    .copy-btn.copied {
+      background: var(--success-bg);
+      border-color: rgba(44, 110, 73, 0.35);
+      color: var(--success);
+    }
+
+    /* Preview Try-On Area Inside Card */
+    .tryon-area {
+      margin-top: auto;
+      padding-top: 14px;
+      border-top: 1px solid var(--border);
+    }
+
+    .tryon-result-wrap {
+      margin-top: 14px;
+      border-radius: var(--radius-md);
+      overflow: hidden;
+      border: 1px solid var(--border);
+      background: var(--bg);
+    }
+
+    .tryon-img-frame {
+      position: relative;
+      background: #141210;
+    }
+
+    .tryon-img {
+      width: 100%;
+      max-height: 440px;
+      object-fit: contain;
+      display: block;
+    }
+
+    .tryon-caption {
+      padding: 10px 14px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      background: var(--bg-subtle);
+      font-size: 0.8rem;
+      color: var(--ink-secondary);
+    }
+
+    .tryon-loading {
+      margin-top: 14px;
+      padding: 22px 16px;
+      border-radius: var(--radius-md);
+      background: var(--bg-subtle);
+      border: 1px dashed var(--border-strong);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      font-size: 0.88rem;
+      font-weight: 500;
+      color: var(--ink-secondary);
+    }
+
+    .tryon-fallback {
+      margin-top: 14px;
+      padding: 14px 16px;
+      border-radius: var(--radius-md);
+      background: var(--bg);
+      border: 1px solid var(--border);
+    }
+
+    .tryon-fallback-title {
+      font-size: 0.76rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--accent);
+      margin-bottom: 6px;
+    }
+
+    .tryon-fallback p {
+      margin: 0;
+      font-size: 0.87rem;
+      color: var(--ink-secondary);
+    }
+
+    .hidden {
+      display: none !important;
+    }
+
+    .sr-only {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      border: 0;
+    }
+  </style>
+</head>
+<body>
+  <!-- Sticky Header with API Key Bar -->
+  <header class="topbar">
+    <div class="topbar-inner">
+      <div class="brand">
+        <div class="brand-mark" aria-hidden="true">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="6" cy="6" r="3"></circle>
+            <circle cx="6" cy="18" r="3"></circle>
+            <line x1="20" y1="4" x2="8.12" y2="15.88"></line>
+            <line x1="14.47" y1="14.48" x2="20" y2="20"></line>
+            <line x1="8.12" y1="8.12" x2="12" y2="12"></line>
+          </svg>
+        </div>
+        <div class="brand-text">
+          <h1>StyleMatch AI</h1>
+          <span>Editorial Hair Consultation</span>
+        </div>
+      </div>
+
+      <div class="api-bar">
+        <label for="apiKeyInput" class="sr-only">Gemini API Key</label>
+        <div class="api-input-wrap">
+          <input
+            id="apiKeyInput"
+            type="password"
+            class="api-input"
+            placeholder="Paste Gemini API Key (AIza...)"
+            autocomplete="off"
+            spellcheck="false"
+          />
+          <button
+            id="toggleKeyVisibility"
+            type="button"
+            class="icon-btn-inline"
+            title="Show or hide API key"
+            aria-label="Show or hide API key"
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+              <circle cx="12" cy="12" r="3"></circle>
+            </svg>
+          </button>
+        </div>
+        <button id="clearKeyBtn" type="button" class="btn btn-secondary btn-sm hidden">Clear</button>
+        <span id="keyStatusBadge" class="key-status">
+          <span class="key-dot"></span>
+          <span id="keyStatusText">API Key Needed</span>
+        </span>
+      </div>
+    </div>
+  </header>
+
+  <main class="container">
+    <section class="editorial-hero">
+      <span class="editorial-kicker">AI Master Stylist Consultation</span>
+      <h2>Discover cuts tailored to your facial architecture &amp; texture.</h2>
+      <p>
+        Upload a clear front-facing portrait or snap one live. StyleMatch AI evaluates your proportions, hairline,
+        and natural texture to prescribe four salon-ready cuts—complete with visual try-on previews and exact stylist scripts.
+      </p>
+    </section>
+
+    <div class="privacy-note" role="note">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+        <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+      </svg>
+      <div>
+        <strong>Privacy First:</strong> Your photo and Gemini API key stay strictly inside your browser
+        (stored only in session memory for this tab) and are sent directly to Google's Gemini API—never to any server.
+      </div>
+    </div>
+
+    <!-- Main Studio Input & Preferences -->
+    <section class="studio-grid">
+      <!-- Step 1: Photo Capture / Upload -->
+      <div class="card">
+        <div class="card-header">
+          <h3 class="card-title">Your Portrait</h3>
+          <span class="step-badge">Step 1</span>
+        </div>
+
+        <input id="fileInput" type="file" accept="image/jpeg,image/png,image/webp" class="hidden" />
+
+        <div id="photoStage" class="photo-stage">
+          <!-- Initial Placeholder -->
+          <div id="uploadPlaceholder" class="upload-placeholder">
+            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
+              <circle cx="12" cy="13" r="4"></circle>
+            </svg>
+            <h4>Front-facing photo</h4>
+            <p>Drag &amp; drop a JPG or PNG here, upload from your device, or use your camera in even lighting.</p>
+            <div class="photo-actions-row">
+              <button id="uploadBtn" type="button" class="btn btn-primary btn-sm">
+                Upload Photo
+              </button>
+              <button id="openCamBtn" type="button" class="btn btn-secondary btn-sm">
+                Use Camera
+              </button>
+            </div>
+          </div>
+
+          <!-- Live Webcam View -->
+          <video id="webcamVideo" class="webcam-video hidden" autoplay playsinline muted></video>
+          <div id="webcamControls" class="media-overlay-bar hidden">
+            <button id="captureBtn" type="button" class="btn btn-accent btn-sm">Capture Photo</button>
+            <button id="cancelCamBtn" type="button" class="btn btn-glass btn-sm">Cancel</button>
+          </div>
+
+          <!-- Uploaded / Captured Image Preview -->
+          <img id="previewImg" class="preview-img hidden" alt="Your portrait preview" />
+          <div id="previewControls" class="media-overlay-bar hidden">
+            <button id="retakeBtn" type="button" class="btn btn-glass btn-sm">Retake / Replace</button>
+          </div>
+        </div>
+
+        <div id="photoError" class="alert alert-error hidden" role="alert"></div>
+      </div>
+
+      <!-- Step 2: Optional Consultation Preferences -->
+      <div class="card">
+        <div class="card-header">
+          <h3 class="card-title">Consultation Preferences</h3>
+          <span class="step-badge">Step 2 &middot; Optional</span>
+        </div>
+
+        <div class="prefs-section">
+          <div>
+            <div class="pref-group-label">
+              <span>Gender / Style Leaning</span>
+              <span class="pref-group-hint">Click to select</span>
+            </div>
+            <div class="pill-group" data-pref="styleLeaning">
+              <button type="button" class="pill-btn active" data-value="No Preference">Balanced / Open</button>
+              <button type="button" class="pill-btn" data-value="Feminine">Feminine</button>
+              <button type="button" class="pill-btn" data-value="Masculine">Masculine</button>
+              <button type="button" class="pill-btn" data-value="Androgynous/Unisex">Androgynous / Unisex</button>
+            </div>
+          </div>
+
+          <div>
+            <div class="pref-group-label">
+              <span>Desired Length</span>
+            </div>
+            <div class="pill-group" data-pref="desiredLength">
+              <button type="button" class="pill-btn active" data-value="Any">Any Length</button>
+              <button type="button" class="pill-btn" data-value="Short">Short</button>
+              <button type="button" class="pill-btn" data-value="Medium">Medium</button>
+              <button type="button" class="pill-btn" data-value="Long">Long</button>
+            </div>
+          </div>
+
+          <div>
+            <div class="pref-group-label">
+              <span>Maintenance Level</span>
+            </div>
+            <div class="pill-group" data-pref="maintenanceLevel">
+              <button type="button" class="pill-btn active" data-value="Medium">Medium</button>
+              <button type="button" class="pill-btn" data-value="Low (wash & go)">Low (Wash &amp; Go)</button>
+              <button type="button" class="pill-btn" data-value="High (daily styling)">High (Daily Styling)</button>
+            </div>
+          </div>
+
+          <div>
+            <div class="pref-group-label">
+              <span>Hair Texture</span>
+              <span class="pref-group-hint">Auto-detects if left default</span>
+            </div>
+            <div class="pill-group" data-pref="hairTexture">
+              <button type="button" class="pill-btn active" data-value="Auto-detect from photo">Auto-detect from photo</button>
+              <button type="button" class="pill-btn" data-value="Straight">Straight</button>
+              <button type="button" class="pill-btn" data-value="Wavy">Wavy</button>
+              <button type="button" class="pill-btn" data-value="Curly">Curly</button>
+              <button type="button" class="pill-btn" data-value="Coily">Coily</button>
+            </div>
+          </div>
+
+          <div class="analyze-footer">
+            <button id="analyzeBtn" type="button" class="btn btn-accent btn-lg">
+              Analyze &amp; Get Haircut Ideas
+            </button>
+            <div id="analyzeError" class="alert alert-error hidden" role="alert"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Analysis Loading Indicator -->
+    <section id="analysisLoading" class="loading-panel hidden" aria-live="polite">
+      <div class="spinner spinner-lg"></div>
+      <h3>Analyzing facial proportions...</h3>
+      <p>Evaluating face geometry, jawline balance, hairline, and natural texture via Gemini 3.8 Flash.</p>
+    </section>
+
+    <!-- Results Area -->
+    <section id="resultsSection" class="results-section hidden" aria-live="polite">
+      <div class="profile-summary-grid">
+        <div class="profile-card">
+          <div class="profile-label">Detected Face Shape</div>
+          <h3 id="faceShapeTitle" class="profile-headline">—</h3>
+          <p id="faceShapeDesc" class="profile-copy">—</p>
+        </div>
+
+        <div class="profile-card">
+          <div class="profile-label">Hair Profile Assessment</div>
+          <div id="hairProfileTags" class="hair-tags"></div>
+          <p id="hairProfileSummary" class="profile-copy">—</p>
+        </div>
+      </div>
+
+      <div class="section-heading-row">
+        <h3>Your 4 Bespoke Cut Recommendations</h3>
+        <span>Preview any look on your photo or copy the stylist script for your appointment</span>
+      </div>
+
+      <div id="recommendationsGrid" class="recs-grid"></div>
+    </section>
+  </main>
+
+  <script>
+    (() => {
+      const SESSION_KEY = "stylematch_gemini_api_key";
+      const ANALYSIS_MODEL = "gemini-3.8-flash";
+      const IMAGE_MODEL = "gemini-nano-banana-2.1";
+      const API_BASE = "https://generativelanguage.googleapis.com/v1beta/models";
+
+      const state = {
+        apiKey: "",
+        photoBase64: "",
+        photoMimeType: "image/jpeg",
+        photoAspectRatio: "3:4",
+        stream: null,
+        preferences: {
+          styleLeaning: "No Preference",
+          desiredLength: "Any",
+          maintenanceLevel: "Medium",
+          hairTexture: "Auto-detect from photo"
+        },
+        analysisResult: null
+      };
+
+      // DOM References
+      const apiKeyInput = document.getElementById("apiKeyInput");
+      const toggleKeyVisibility = document.getElementById("toggleKeyVisibility");
+      const clearKeyBtn = document.getElementById("clearKeyBtn");
+      const keyStatusBadge = document.getElementById("keyStatusBadge");
+      const keyStatusText = document.getElementById("keyStatusText");
+
+      const fileInput = document.getElementById("fileInput");
+      const photoStage = document.getElementById("photoStage");
+      const uploadPlaceholder = document.getElementById("uploadPlaceholder");
+      const uploadBtn = document.getElementById("uploadBtn");
+      const openCamBtn = document.getElementById("openCamBtn");
+      const webcamVideo = document.getElementById("webcamVideo");
+      const webcamControls = document.getElementById("webcamControls");
+      const captureBtn = document.getElementById("captureBtn");
+      const cancelCamBtn = document.getElementById("cancelCamBtn");
+      const previewImg = document.getElementById("previewImg");
+      const previewControls = document.getElementById("previewControls");
+      const retakeBtn = document.getElementById("retakeBtn");
+      const photoError = document.getElementById("photoError");
+
+      const analyzeBtn = document.getElementById("analyzeBtn");
+      const analyzeError = document.getElementById("analyzeError");
+      const analysisLoading = document.getElementById("analysisLoading");
+      const resultsSection = document.getElementById("resultsSection");
+      const faceShapeTitle = document.getElementById("faceShapeTitle");
+      const faceShapeDesc = document.getElementById("faceShapeDesc");
+      const hairProfileTags = document.getElementById("hairProfileTags");
+      const hairProfileSummary = document.getElementById("hairProfileSummary");
+      const recommendationsGrid = document.getElementById("recommendationsGrid");
+
+      // --- API Key Handling (sessionStorage only) ---
+      function syncApiKeyUI(key) {
+        const trimmed = (key || "").trim();
+        state.apiKey = trimmed;
+        if (trimmed) {
+          sessionStorage.setItem(SESSION_KEY, trimmed);
+          keyStatusBadge.classList.add("ready");
+          keyStatusText.textContent = "Key Ready";
+          clearKeyBtn.classList.remove("hidden");
+        } else {
+          sessionStorage.removeItem(SESSION_KEY);
+          keyStatusBadge.classList.remove("ready");
+          keyStatusText.textContent = "API Key Needed";
+          clearKeyBtn.classList.add("hidden");
+        }
+      }
+
+      const savedKey = sessionStorage.getItem(SESSION_KEY);
+      if (savedKey) {
+        apiKeyInput.value = savedKey;
+        syncApiKeyUI(savedKey);
+      }
+
+      apiKeyInput.addEventListener("input", (e) => syncApiKeyUI(e.target.value));
+      clearKeyBtn.addEventListener("click", () => {
+        apiKeyInput.value = "";
+        syncApiKeyUI("");
+        apiKeyInput.focus();
+      });
+
+      toggleKeyVisibility.addEventListener("click", () => {
+        apiKeyInput.type = apiKeyInput.type === "password" ? "text" : "password";
+      });
+
+      // --- Utility Helpers ---
+      function showError(el, msg) {
+        el.textContent = msg;
+        el.classList.remove("hidden");
+      }
+
+      function clearError(el) {
+        el.textContent = "";
+        el.classList.add("hidden");
+      }
+
+      function escapeHtml(str) {
+        return String(str || "")
+          .replace(/&/g, "&amp;")
+          .replace(/</g, "&lt;")
+          .replace(/>/g, "&gt;")
+          .replace(/"/g, "&quot;")
+          .replace(/'/g, "&#39;");
+      }
+
+      function pickSupportedAspectRatio(width, height) {
+        const ratio = width / Math.max(height, 1);
+        const options = [
+          { label: "1:1", value: 1 },
+          { label: "3:4", value: 3 / 4 },
+          { label: "4:3", value: 4 / 3 },
+          { label: "9:16", value: 9 / 16 },
+          { label: "16:9", value: 16 / 9 }
+        ];
+        let best = options[1];
+        let minDiff = Infinity;
+        for (const opt of options) {
+          const diff = Math.abs(ratio - opt.value);
+          if (diff < minDiff) {
+            minDiff = diff;
+            best = opt;
+          }
+        }
+        return best.label;
+      }
+
+      function stopCamera() {
+        if (state.stream) {
+          state.stream.getTracks().forEach((t) => t.stop());
+          state.stream = null;
+        }
+        webcamVideo.srcObject = null;
+        webcamVideo.classList.add("hidden");
+        webcamControls.classList.add("hidden");
+      }
+
+      function resetPhotoStage() {
+        stopCamera();
+        state.photoBase64 = "";
+        previewImg.src = "";
+        previewImg.classList.add("hidden");
+        previewControls.classList.add("hidden");
+        uploadPlaceholder.classList.remove("hidden");
+        photoStage.classList.remove("has-media");
+        fileInput.value = "";
+        clearError(photoError);
+      }
+
+      function setCapturedPhoto(canvas) {
+        const mimeType = "image/jpeg";
+        const dataUrl = canvas.toDataURL(mimeType, 0.9);
+        const base64 = dataUrl.split(",")[1];
+        state.photoBase64 = base64;
+        state.photoMimeType = mimeType;
+        state.photoAspectRatio = pickSupportedAspectRatio(canvas.width, canvas.height);
+
+        stopCamera();
+        uploadPlaceholder.classList.add("hidden");
+        previewImg.src = dataUrl;
+        previewImg.classList.remove("hidden");
+        previewControls.classList.remove("hidden");
+        photoStage.classList.add("has-media");
+        clearError(photoError);
+        clearError(analyzeError);
+      }
+
+      function processImageFile(file) {
+        clearError(photoError);
+        if (!file || !file.type.startsWith("image/")) {
+          showError(photoError, "Please select a valid JPG, PNG, or WebP image file.");
+          return;
+        }
+
+        const reader = new FileReader();
+        reader.onload = () => {
+          const img = new Image();
+          img.onload = () => {
+            const maxDim = 1280;
+            let { width, height } = img;
+            if (width > maxDim || height > maxDim) {
+              const scale = Math.min(maxDim / width, maxDim / height);
+              width = Math.round(width * scale);
+              height = Math.round(height * scale);
+            }
+            const canvas = document.createElement("canvas");
+            canvas.width = width;
+            canvas.height = height;
+            const ctx = canvas.getContext("2d");
+            ctx.drawImage(img, 0, 0, width, height);
+            setCapturedPhoto(canvas);
+          };
+          img.onerror = () => showError(photoError, "Could not decode this image. Try another JPG or PNG.");
+          img.src = reader.result;
+        };
+        reader.onerror = () => showError(photoError, "Failed to read the selected file.");
+        reader.readAsDataURL(file);
+      }
+
+      // --- Photo Upload & Drag/Drop ---
+      uploadBtn.addEventListener("click", () => fileInput.click());
+      fileInput.addEventListener("change", (e) => {
+        if (e.target.files && e.target.files[0]) {
+          processImageFile(e.target.files[0]);
+        }
+      });
+
+      photoStage.addEventListener("dragover", (e) => {
+        e.preventDefault();
+        if (!state.photoBase64 && !state.stream) {
+          photoStage.classList.add("dragover");
+        }
+      });
+
+      photoStage.addEventListener("dragleave", () => {
+        photoStage.classList.remove("dragover");
+      });
+
+      photoStage.addEventListener("drop", (e) => {
+        e.preventDefault();
+        photoStage.classList.remove("dragover");
+        if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+          processImageFile(e.dataTransfer.files[0]);
+        }
+      });
+
+      retakeBtn.addEventListener("click", resetPhotoStage);
+
+      // --- Webcam Capture ---
+      openCamBtn.addEventListener("click", async () => {
+        clearError(photoError);
+        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+          showError(
+            photoError,
+            "Camera access is unavailable in this browser context. Please upload a photo instead (or serve via HTTPS/localhost)."
+          );
+          return;
+        }
+        try {
+          const stream = await navigator.mediaDevices.getUserMedia({
+            video: { facingMode: "user", width: { ideal: 1280 }, height: { ideal: 960 } },
+            audio: false
+          });
+          state.stream = stream;
+          webcamVideo.srcObject = stream;
+          uploadPlaceholder.classList.add("hidden");
+          webcamVideo.classList.remove("hidden");
+          webcamControls.classList.remove("hidden");
+          photoStage.classList.add("has-media");
+        } catch (err) {
+          showError(photoError, `Unable to start camera: ${err.message || "Permission denied."}`);
+        }
+      });
+
+      cancelCamBtn.addEventListener("click", resetPhotoStage);
+
+      captureBtn.addEventListener("click", () => {
+        if (!webcamVideo.videoWidth || !webcamVideo.videoHeight) return;
+        const maxDim = 1280;
+        let width = webcamVideo.videoWidth;
+        let height = webcamVideo.videoHeight;
+        if (width > maxDim || height > maxDim) {
+          const scale = Math.min(maxDim / width, maxDim / height);
+          width = Math.round(width * scale);
+          height = Math.round(height * scale);
+        }
+        const canvas = document.createElement("canvas");
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext("2d");
+        // Un-mirror snapshot so it matches natural front-facing photo orientation
+        ctx.translate(width, 0);
+        ctx.scale(-1, 1);
+        ctx.drawImage(webcamVideo, 0, 0, width, height);
+        setCapturedPhoto(canvas);
+      });
+
+      // --- Preference Pill Toggles ---
+      document.querySelectorAll(".pill-group").forEach((group) => {
+        const prefKey = group.dataset.pref;
+        group.addEventListener("click", (e) => {
+          const btn = e.target.closest(".pill-btn");
+          if (!btn) return;
+          group.querySelectorAll(".pill-btn").forEach((b) => b.classList.remove("active"));
+          btn.classList.add("active");
+          state.preferences[prefKey] = btn.dataset.value;
+        });
+      });
+
+      // --- Gemini REST Helpers ---
+      function stripCodeFences(text) {
+        return text.replace(/^```(?:json)?\s*/i, "").replace(/\s*```$/i, "").trim();
+      }
+
+      async function parseGeminiError(response) {
+        try {
+          const errData = await response.json();
+          return errData?.error?.message || `HTTP ${response.status} ${response.statusText}`;
+        } catch {
+          return `HTTP ${response.status} ${response.statusText}`;
+        }
+      }
+
+      // --- Step 3: Face & Hair Analysis (gemini-3.8-flash) ---
+      analyzeBtn.addEventListener("click", async () => {
+        clearError(analyzeError);
+
+        if (!state.apiKey) {
+          showError(analyzeError, "Please paste your Gemini API key in the top header bar first.");
+          apiKeyInput.focus();
+          return;
+        }
+        if (!state.photoBase64) {
+          showError(analyzeError, "Please upload or capture a clear front-facing photo first.");
+          return;
+        }
+
+        analyzeBtn.disabled = true;
+        resultsSection.classList.add("hidden");
+        analysisLoading.classList.remove("hidden");
+        analysisLoading.scrollIntoView({ behavior: "smooth", block: "nearest" });
+
+        const responseSchema = {
+          type: "OBJECT",
+          properties: {
+            faceShape: {
+              type: "OBJECT",
+              properties: {
+                shape: {
+                  type: "STRING",
+                  description: "Detected face shape such as Oval, Round, Square, Heart, Diamond, or Oblong."
+                },
+                explanation: {
+                  type: "STRING",
+                  description: "Brief, specific explanation of their facial proportions (forehead width, cheekbones, jawline, length-to-width balance)."
+                }
+              },
+              required: ["shape", "explanation"]
+            },
+            hairProfile: {
+              type: "OBJECT",
+              properties: {
+                texture: { type: "STRING", description: "Estimated hair texture (e.g., Straight, Wavy, Curly, Coily)." },
+                density: { type: "STRING", description: "Estimated density and strand thickness (e.g., Fine/Medium density, Thick/Coarse)." },
+                hairline: { type: "STRING", description: "Observed hairline shape, crown, or parting tendencies." },
+                summary: { type: "STRING", description: "Concise 1-2 sentence summary of their overall hair canvas." }
+              },
+              required: ["texture", "density", "hairline", "summary"]
+            },
+            recommendations: {
+              type: "ARRAY",
+              minItems: 4,
+              maxItems: 4,
+              items: {
+                type: "OBJECT",
+                properties: {
+                  name: {
+                    type: "STRING",
+                    description: "Specific, recognizable haircut name (e.g., 'Textured French Crop', 'Long Layered Curtain Bangs')."
+                  },
+                  whyItWorks: {
+                    type: "STRING",
+                    description: "2-3 sentences explaining how this specific cut balances their detected face shape and harmonizes with their hair texture."
+                  },
+                  stylingTip: {
+                    type: "STRING",
+                    description: "Practical daily styling routine and exact recommended product types."
+                  },
+                  barberStylistScript: {
+                    type: "STRING",
+                    description: "Exact salon/barber terminology the user can show or read aloud (guard sizes, point-cutting, layering angles, nape finish, parting)."
+                  },
+                  visualFramingPreview: {
+                    type: "STRING",
+                    description: "2-3 vivid sentences describing how the silhouette, fringe/parting, and length frame their forehead, cheekbones, and jawline."
+                  }
+                },
+                required: ["name", "whyItWorks", "stylingTip", "barberStylistScript", "visualFramingPreview"]
+              }
+            }
+          },
+          required: ["faceShape", "hairProfile", "recommendations"]
+        };
+
+        const promptText = [
+          "You are an editorial master hairstylist and facial proportion specialist.",
+          "Analyze the attached front-facing portrait carefully and recommend 4 tailored, flattering haircuts.",
+          "",
+          "Client Preferences:",
+          `- Style / Gender Leaning: ${state.preferences.styleLeaning}`,
+          `- Desired Length: ${state.preferences.desiredLength}`,
+          `- Maintenance Level: ${state.preferences.maintenanceLevel}`,
+          `- Hair Texture Input: ${state.preferences.hairTexture}`,
+          "",
+          "Instructions:",
+          "1. Identify their face shape and describe the key facial proportions you observe in the photo.",
+          "2. Assess their hair texture, density, and hairline (if Hair Texture Input is 'Auto-detect from photo', infer it directly from the photo; otherwise respect their stated texture while noting what you observe).",
+          "3. Provide exactly 4 distinct, tailored haircut recommendations that respect their preferences and flatter their unique proportions.",
+          "4. Ensure each barberStylistScript uses authentic salon/barber terminology (e.g., guard numbers, scissor-over-comb, internal weight removal, point cutting, graduation, face-framing elevation).",
+          "5. Be encouraging, specific, and practical."
+        ].join("\n");
+
+        const payload = {
+          contents: [
+            {
+              role: "user",
+              parts: [
+                { text: promptText },
+                {
+                  inlineData: {
+                    mimeType: state.photoMimeType,
+                    data: state.photoBase64
+                  }
+                }
+              ]
+            }
+          ],
+          generationConfig: {
+            responseMimeType: "application/json",
+            responseSchema,
+            thinkingConfig: {
+              thinkingLevel: "low"
+            }
+          }
+        };
+
+        try {
+          const url = `${API_BASE}/${ANALYSIS_MODEL}:generateContent?key=${encodeURIComponent(state.apiKey)}`;
+          const res = await fetch(url, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload)
+          });
+
+          if (!res.ok) {
+            const msg = await parseGeminiError(res);
+            throw new Error(msg);
+          }
+
+          const data = await res.json();
+          const parts = data?.candidates?.[0]?.content?.parts || [];
+          const textPart =
+            parts.find((p) => typeof p.text === "string" && !p.thought) ||
+            parts.find((p) => typeof p.text === "string");
+
+          if (!textPart || !textPart.text) {
+            const reason = data?.candidates?.[0]?.finishReason || data?.promptFeedback?.blockReason || "Empty response";
+            throw new Error(`No analysis returned (${reason}). Please try a clearer front-facing photo.`);
+          }
+
+          const parsed = JSON.parse(stripCodeFences(textPart.text));
+          state.analysisResult = parsed;
+          renderResults(parsed);
+        } catch (err) {
+          showError(analyzeError, `Analysis failed: ${err.message}`);
+        } finally {
+          analyzeBtn.disabled = false;
+          analysisLoading.classList.add("hidden");
+        }
+      });
+
+      // --- Render Analysis & Recommendation Cards ---
+      function renderResults(data) {
+        faceShapeTitle.textContent = data.faceShape?.shape || "Analyzed";
+        faceShapeDesc.textContent = data.faceShape?.explanation || "";
+
+        const hp = data.hairProfile || {};
+        hairProfileTags.innerHTML = "";
+        [hp.texture, hp.density, hp.hairline].filter(Boolean).forEach((tag) => {
+          const span = document.createElement("span");
+          span.className = "hair-tag";
+          span.textContent = tag;
+          hairProfileTags.appendChild(span);
+        });
+        hairProfileSummary.textContent = hp.summary || "";
+
+        recommendationsGrid.innerHTML = "";
+        (data.recommendations || []).forEach((rec, index) => {
+          const card = document.createElement("article");
+          card.className = "rec-card";
+          card.dataset.index = String(index);
+
+          card.innerHTML = `
+            <div class="rec-header">
+              <div>
+                <div class="rec-num">Look 0${index + 1}</div>
+                <h4 class="rec-name">${escapeHtml(rec.name)}</h4>
+              </div>
+            </div>
+
+            <div class="rec-body">
+              <div>
+                <div class="rec-block-label">Why It Works For You</div>
+                <p class="rec-block-text">${escapeHtml(rec.whyItWorks)}</p>
+              </div>
+
+              <div>
+                <div class="rec-block-label">Daily Styling &amp; Product</div>
+                <p class="rec-block-text">${escapeHtml(rec.stylingTip)}</p>
+              </div>
+
+              <div class="script-box">
+                <div class="script-box-header">
+                  <div class="rec-block-label" style="margin-bottom:0;">Stylist / Barber Script</div>
+                  <button type="button" class="copy-btn" data-copy-index="${index}">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                      <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                    </svg>
+                    <span>Copy Stylist Script</span>
+                  </button>
+                </div>
+                <p class="script-text">${escapeHtml(rec.barberStylistScript)}</p>
+              </div>
+
+              <div class="tryon-area">
+                <button type="button" class="btn btn-primary btn-sm preview-btn" data-preview-index="${index}" style="width:100%;">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M12 3l1.912 5.813a2 2 0 0 0 1.275 1.275L21 12l-5.813 1.912a2 2 0 0 0-1.275 1.275L12 21l-1.912-5.813a2 2 0 0 0-1.275-1.275L3 12l5.813-1.912a2 2 0 0 0 1.275-1.275L12 3z"></path>
+                  </svg>
+                  <span>Preview This Look</span>
+                </button>
+                <div class="tryon-slot" id="tryonSlot-${index}"></div>
+              </div>
+            </div>
+          `;
+
+          recommendationsGrid.appendChild(card);
+        });
+
+        resultsSection.classList.remove("hidden");
+        resultsSection.scrollIntoView({ behavior: "smooth", block: "start" });
+      }
+
+      // --- Card Button Event Delegation (Copy & Preview) ---
+      recommendationsGrid.addEventListener("click", async (e) => {
+        const copyBtn = e.target.closest("[data-copy-index]");
+        if (copyBtn) {
+          const idx = Number(copyBtn.dataset.copyIndex);
+          const rec = state.analysisResult?.recommendations?.[idx];
+          if (!rec) return;
+          await copyTextWithFeedback(rec.barberStylistScript, copyBtn);
+          return;
+        }
+
+        const previewBtn = e.target.closest("[data-preview-index]");
+        if (previewBtn) {
+          const idx = Number(previewBtn.dataset.previewIndex);
+          await generateLookPreview(idx, previewBtn);
+        }
+      });
+
+      async function copyTextWithFeedback(text, btn) {
+        let ok = false;
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          try {
+            await navigator.clipboard.writeText(text);
+            ok = true;
+          } catch {
+            ok = false;
+          }
+        }
+        if (!ok) {
+          const ta = document.createElement("textarea");
+          ta.value = text;
+          ta.style.position = "fixed";
+          ta.style.opacity = "0";
+          document.body.appendChild(ta);
+          ta.select();
+          try {
+            ok = document.execCommand("copy");
+          } catch {
+            ok = false;
+          }
+          document.body.removeChild(ta);
+        }
+
+        if (ok) {
+          const label = btn.querySelector("span");
+          const prevText = label.textContent;
+          btn.classList.add("copied");
+          label.textContent = "Copied!";
+          setTimeout(() => {
+            btn.classList.remove("copied");
+            label.textContent = prevText;
+          }, 2000);
+        }
+      }
+
+      // --- Step 4: Visual Try-On Preview (gemini-nano-banana-2.1) ---
+      async function generateLookPreview(index, btn) {
+        const rec = state.analysisResult?.recommendations?.[index];
+        const slot = document.getElementById(`tryonSlot-${index}`);
+        if (!rec || !slot) return;
+
+        if (!state.apiKey) {
+          slot.innerHTML = `<div class="alert alert-error">Please enter your Gemini API key in the header first.</div>`;
+          return;
+        }
+
+        btn.disabled = true;
+        const btnLabel = btn.querySelector("span");
+        btnLabel.textContent = "Generating Hair Preview...";
+
+        slot.innerHTML = `
+          <div class="tryon-loading" role="status">
+            <div class="spinner"></div>
+            <span>Generating hair preview...</span>
+          </div>
+        `;
+
+        const faceShapeName = state.analysisResult?.faceShape?.shape || "";
+        const hairTexture = state.analysisResult?.hairProfile?.texture || "";
+
+        const editPrompt = [
+          `Edit this portrait photograph so ONLY the person's hairstyle is changed to: "${rec.name}".`,
+          `Cut & styling details: ${rec.visualFramingPreview} ${rec.barberStylistScript}`,
+          `Keep the hair texture natural to ${hairTexture || "their natural hair"} and maintain their natural hair color unless subtle dimension is inherent to the cut.`,
+          `CRITICAL PRESERVATION RULES: Do NOT alter the person's face, facial features, eye shape, nose, mouth, skin tone, facial hair, expression, age, head pose, clothing, or background. Keep the exact same studio/room lighting, camera angle, and photorealistic quality.`,
+          `The result must look like an authentic, unedited salon 'after' photo of this exact person wearing the "${rec.name}" haircut balanced for a ${faceShapeName || "natural"} face shape.`
+        ].join(" ");
+
+        // Nano Banana 2.1 does not support temperature, topK, topP, seed, or logprobs
+        const payload = {
+          contents: [
+            {
+              role: "user",
+              parts: [
+                { text: editPrompt },
+                {
+                  inlineData: {
+                    mimeType: state.photoMimeType,
+                    data: state.photoBase64
+                  }
+                }
+              ]
+            }
+          ],
+          generationConfig: {
+            responseModalities: ["TEXT", "IMAGE"],
+            imageConfig: {
+              aspectRatio: state.photoAspectRatio || "3:4",
+              imageSize: "1K"
+            }
+          }
+        };
+
+        try {
+          const url = `${API_BASE}/${IMAGE_MODEL}:generateContent?key=${encodeURIComponent(state.apiKey)}`;
+          const res = await fetch(url, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload)
+          });
+
+          if (!res.ok) {
+            const errMsg = await parseGeminiError(res);
+            throw new Error(errMsg);
+          }
+
+          const data = await res.json();
+          const candidate = data?.candidates?.[0];
+          const parts = candidate?.content?.parts || [];
+          const imagePart =
+            parts.find((p) => p.inlineData && p.inlineData.data && !p.thought) ||
+            parts.find((p) => p.inlineData && p.inlineData.data);
+
+          if (!imagePart) {
+            const textHint = parts.find((p) => p.text && !p.thought)?.text;
+            const reason = candidate?.finishReason || data?.promptFeedback?.blockReason || "No image returned";
+            throw new Error(textHint ? `${reason}: ${textHint}` : `Image generation unavailable (${reason}).`);
+          }
+
+          const imgMime = imagePart.inlineData.mimeType || "image/png";
+          const imgSrc = `data:${imgMime};base64,${imagePart.inlineData.data}`;
+
+          slot.innerHTML = `
+            <div class="tryon-result-wrap">
+              <div class="tryon-img-frame">
+                <img class="tryon-img" src="${imgSrc}" alt="Virtual try-on preview of ${escapeHtml(rec.name)}" />
+              </div>
+              <div class="tryon-caption">
+                <span>AI Preview &middot; ${escapeHtml(rec.name)}</span>
+                <a class="btn btn-secondary btn-sm" href="${imgSrc}" download="stylematch-${index + 1}.png">Save</a>
+              </div>
+            </div>
+          `;
+          btnLabel.textContent = "Regenerate Preview";
+        } catch (err) {
+          slot.innerHTML = `
+            <div class="alert alert-error" role="alert">
+              <div>
+                <strong>Preview unavailable:</strong> ${escapeHtml(err.message)}
+              </div>
+            </div>
+            <div class="tryon-fallback">
+              <div class="tryon-fallback-title">How This Cut Frames Your Face</div>
+              <p>${escapeHtml(rec.visualFramingPreview || rec.whyItWorks)}</p>
+            </div>
+          `;
+          btnLabel.textContent = "Retry Preview";
+        } finally {
+          btn.disabled = false;
+        }
+      }
+    })();
+  </script>
+</body>
+</html>
