@@ -1085,8 +1085,8 @@
     <!-- Analysis Loading Indicator -->
     <section id="analysisLoading" class="loading-panel hidden" aria-live="polite">
       <div class="spinner spinner-lg"></div>
-      <h3>Analyzing facial proportions...</h3>
-      <p>Evaluating face geometry, jawline balance, hairline, and natural texture via Gemini 3.8 Flash.</p>
+      <h3 id="analysisLoadingTitle">Analyzing facial proportions...</h3>
+      <p id="analysisLoadingSubtitle">Evaluating face geometry, jawline balance, hairline, and natural texture via gemini-3.8-flash.</p>
     </section>
 
     <!-- Results Area -->
@@ -1117,7 +1117,13 @@
   <script>
     (() => {
       const SESSION_KEY = "stylematch_gemini_api_key";
-      const ANALYSIS_MODEL = "gemini-3.8-flash";
+      const ANALYSIS_MODELS = [
+        "gemini-3.8-flash",
+        "gemini-4-hydrogen",
+        "gemini-3.6-flash",
+        "gemini-3.5-flash-lite"
+      ];
+      const RETRY_DELAYS_MS = [1500, 3000, 6000]; // 3 retries with exponential backoff (~1.5s, 3s, 6s)
       const IMAGE_MODEL = "gemini-nano-banana-2.1";
       const API_BASE = "https://generativelanguage.googleapis.com/v1beta/models";
 
@@ -1160,6 +1166,8 @@
       const analyzeBtn = document.getElementById("analyzeBtn");
       const analyzeError = document.getElementById("analyzeError");
       const analysisLoading = document.getElementById("analysisLoading");
+      const analysisLoadingTitle = document.getElementById("analysisLoadingTitle");
+      const analysisLoadingSubtitle = document.getElementById("analysisLoadingSubtitle");
       const resultsSection = document.getElementById("resultsSection");
       const faceShapeTitle = document.getElementById("faceShapeTitle");
       const faceShapeDesc = document.getElementById("faceShapeDesc");
@@ -1219,6 +1227,30 @@
           .replace(/>/g, "&gt;")
           .replace(/"/g, "&quot;")
           .replace(/'/g, "&#39;");
+      }
+
+      function sleep(ms) {
+        return new Promise((resolve) => setTimeout(resolve, ms));
+      }
+
+      function setAnalysisStatus(title, subtitle) {
+        analysisLoadingTitle.textContent = title;
+        analysisLoadingSubtitle.textContent = subtitle;
+      }
+
+      function isHighDemandError(status, message) {
+        if (status === 429 || status === 503) return true;
+        const text = (message || "").toLowerCase();
+        return (
+          text.includes("high demand") ||
+          text.includes("overloaded") ||
+          text.includes("capacity") ||
+          text.includes("resource exhausted") ||
+          text.includes("too many requests") ||
+          text.includes("rate limit") ||
+          text.includes("temporarily unavailable") ||
+          text.includes("try again later")
+        );
       }
 
       function pickSupportedAspectRatio(width, height) {
@@ -1418,7 +1450,90 @@
         }
       }
 
-      // --- Step 3: Face & Hair Analysis (gemini-3.8-flash) ---
+      // --- Step 3: Face & Hair Analysis with Retry & Model Fallback ---
+      async function fetchAnalysisWithRetryAndFallback(payload) {
+        let lastError = null;
+
+        for (let modelIdx = 0; modelIdx < ANALYSIS_MODELS.length; modelIdx++) {
+          const model = ANALYSIS_MODELS[modelIdx];
+
+          if (modelIdx === 0) {
+            setAnalysisStatus(
+              "Analyzing facial proportions...",
+              `Evaluating face geometry, jawline balance, hairline, and natural texture via ${model}.`
+            );
+          } else {
+            setAnalysisStatus(
+              `Switching to fallback model (${model})...`,
+              `${ANALYSIS_MODELS[modelIdx - 1]} experienced high demand. Retrying analysis with ${model}.`
+            );
+          }
+
+          const url = `${API_BASE}/${model}:generateContent?key=${encodeURIComponent(state.apiKey)}`;
+
+          for (let attempt = 0; attempt <= RETRY_DELAYS_MS.length; attempt++) {
+            try {
+              const res = await fetch(url, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(payload)
+              });
+
+              if (!res.ok) {
+                const errMsg = await parseGeminiError(res);
+                const err = new Error(errMsg);
+                err.status = res.status;
+                err.retryable = isHighDemandError(res.status, errMsg);
+                throw err;
+              }
+
+              const data = await res.json();
+              const parts = data?.candidates?.[0]?.content?.parts || [];
+              const textPart =
+                parts.find((p) => typeof p.text === "string" && !p.thought) ||
+                parts.find((p) => typeof p.text === "string");
+
+              if (!textPart || !textPart.text) {
+                const reason =
+                  data?.candidates?.[0]?.finishReason ||
+                  data?.promptFeedback?.blockReason ||
+                  "Empty response";
+                const err = new Error(
+                  `No analysis returned (${reason}). Please try a clearer front-facing photo.`
+                );
+                err.retryable = false;
+                throw err;
+              }
+
+              return JSON.parse(stripCodeFences(textPart.text));
+            } catch (err) {
+              lastError = err;
+
+              if (err.retryable && attempt < RETRY_DELAYS_MS.length) {
+                const delayMs = RETRY_DELAYS_MS[attempt];
+                const delaySec = (delayMs / 1000).toFixed(delayMs % 1000 === 0 ? 0 : 1);
+                const retryNum = attempt + 1;
+                const maxRetries = RETRY_DELAYS_MS.length;
+                setAnalysisStatus(
+                  `High demand detected, retrying (${retryNum}/${maxRetries})...`,
+                  `${model} is temporarily overloaded. Waiting ${delaySec}s before attempt ${retryNum} of ${maxRetries}.`
+                );
+                await sleep(delayMs);
+                continue;
+              }
+
+              if ((err.retryable || err.status === 404) && modelIdx < ANALYSIS_MODELS.length - 1) {
+                break;
+              }
+
+              throw err;
+            }
+          }
+        }
+
+        throw lastError || new Error("All analysis models are currently busy due to high demand.");
+      }
+
       analyzeBtn.addEventListener("click", async () => {
         clearError(analyzeError);
 
@@ -1434,6 +1549,10 @@
 
         analyzeBtn.disabled = true;
         resultsSection.classList.add("hidden");
+        setAnalysisStatus(
+          "Analyzing facial proportions...",
+          `Evaluating face geometry, jawline balance, hairline, and natural texture via ${ANALYSIS_MODELS[0]}.`
+        );
         analysisLoading.classList.remove("hidden");
         analysisLoading.scrollIntoView({ behavior: "smooth", block: "nearest" });
 
@@ -1542,30 +1661,7 @@
         };
 
         try {
-          const url = `${API_BASE}/${ANALYSIS_MODEL}:generateContent?key=${encodeURIComponent(state.apiKey)}`;
-          const res = await fetch(url, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(payload)
-          });
-
-          if (!res.ok) {
-            const msg = await parseGeminiError(res);
-            throw new Error(msg);
-          }
-
-          const data = await res.json();
-          const parts = data?.candidates?.[0]?.content?.parts || [];
-          const textPart =
-            parts.find((p) => typeof p.text === "string" && !p.thought) ||
-            parts.find((p) => typeof p.text === "string");
-
-          if (!textPart || !textPart.text) {
-            const reason = data?.candidates?.[0]?.finishReason || data?.promptFeedback?.blockReason || "Empty response";
-            throw new Error(`No analysis returned (${reason}). Please try a clearer front-facing photo.`);
-          }
-
-          const parsed = JSON.parse(stripCodeFences(textPart.text));
+          const parsed = await fetchAnalysisWithRetryAndFallback(payload);
           state.analysisResult = parsed;
           renderResults(parsed);
         } catch (err) {
